@@ -6,4 +6,4 @@ target/
 *.class
 
 # except io.class
-!lib/
+!io.class
