@@ -1,5 +1,9 @@
-# ignore all folders name __pycache__
+# ignore all folders name __pycache__ target
 __pycache__/
+target/
 
 # ignore all .class files
 *.class
+
+# except io.class
+!lib/
