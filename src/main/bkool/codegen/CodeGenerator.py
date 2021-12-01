@@ -145,6 +145,10 @@ class CodeGenVisitor(BaseVisitor):
 
     def visitIntLiteral(self,ast,o):
         return self.emit.emitPUSHICONST(ast.value,o.frame),IntType()
+    
+    def visitFloatLiteral(self, ast, o):
+        return self.emit.emitPUSHFCONST(ast.value, o.frame), FLoatType()
+    
     def visitBinaryOp(self, ast, o):
         e1c,e1t = self.visit(ast.left,o)
         e2c,e2t = self.visit(ast.right,o)

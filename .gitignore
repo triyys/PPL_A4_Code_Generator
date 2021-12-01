@@ -1,1 +1,5 @@
+# ignore all folders name __pycache__
 __pycache__/
+
+# ignore all .class files
+*.class
