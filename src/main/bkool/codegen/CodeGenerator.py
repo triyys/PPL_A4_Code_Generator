@@ -189,13 +189,28 @@ class CodeGenVisitor(BaseVisitor):
         pass
 
     def visitBinaryOp(self, ast: BinaryOp, o):
-        e1c,e1t = self.visit(ast.left, o)
-        e2c,e2t = self.visit(ast.right, o)
+        exp1Code, exp1Type = self.visit(ast.left, o)
+        exp2Code, exp2Type = self.visit(ast.right, o)
         
-        if ast.op in ['+', '-']:
-            code = self.emit.emitADDOP(ast.op, e1t, o.frame)
+        if type(exp1Type) is type(exp2Type):
+            returnType = exp1Type
+        elif type(exp1Type) is FloatType and type(exp2Type) is IntType:
+            exp1Code += self.emit.emitI2F(o.frame)
+            returnType = FloatType()
+        elif type(exp2Type) is FloatType and type(exp1Type) is IntType:
+            exp2Code += self.emit.emitI2F(o.frame)
+            returnType = FloatType()
+        else:
+            returnType = BoolType()
             
-        return e1c + e2c + code, e1t
+        if ast.op in ['+', '-']:
+            code = self.emit.emitADDOP(ast.op, returnType, o.frame)
+        elif ast.op in ['*', '/']:
+            code = self.emit.emitMULOP(ast.op, returnType, o.frame)
+        elif ast.op in ['>', '<', '==', '!=', '>=', '<=']:
+            code = self.emit.emitREOP(ast.op, returnType, o.frame)
+            
+        return exp1Code + exp2Code + code, returnType
     
     def visitUnaryOp(self, ast: UnaryOp, o):
         pass
@@ -213,10 +228,10 @@ class CodeGenVisitor(BaseVisitor):
         pass
     
     def visitIntLiteral(self, ast, o):
-        return self.emit.emitPUSHICONST(ast.value,o.frame),IntType()
+        return self.emit.emitPUSHICONST(ast.value,o.frame), IntType()
     
     def visitFloatLiteral(self, ast, o):
-        return self.emit.emitPUSHFCONST(ast.value, o.frame), FLoatType()
+        return self.emit.emitPUSHFCONST(str(ast.value), o.frame), FloatType()
     
     def visitBooleanLiteral(self, ast, o):
         pass
