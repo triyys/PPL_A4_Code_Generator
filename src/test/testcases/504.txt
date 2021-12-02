@@ -1,5 +1,5 @@
 class BKoolClass {
                 static void main() {
-                    io.writeFloat(1.2 + 1.0);
+                    io.writeFloat(1.2 + 1);
                 }
             }

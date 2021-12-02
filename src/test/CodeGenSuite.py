@@ -28,7 +28,7 @@ class CheckCodeGenSuite(unittest.TestCase):
     def test_bkool_float_ast(self):
         input = """class BKoolClass {
                 static void main() {
-                    io.writeFloat(1.2 + 1.0);
+                    io.writeFloat(1.2 + 1);
                 }
             }"""
         expect = "2.2"

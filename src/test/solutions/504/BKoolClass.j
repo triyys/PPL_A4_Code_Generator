@@ -6,7 +6,8 @@
 .var 0 is args [Ljava/lang/String; from Label0 to Label1
 Label0:
 	ldc 1.2
-	ldc 1.0
+	iconst_1
+	i2f
 	fadd
 	invokestatic io/writeFloat(F)V
 Label1:

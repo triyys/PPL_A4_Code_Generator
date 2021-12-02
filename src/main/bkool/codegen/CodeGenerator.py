@@ -194,10 +194,10 @@ class CodeGenVisitor(BaseVisitor):
         
         if type(exp1Type) is type(exp2Type):
             returnType = exp1Type
-        elif type(exp1Type) is FloatType and type(exp2Type) is IntType:
+        elif type(exp1Type) is IntType and type(exp2Type) is FloatType:
             exp1Code += self.emit.emitI2F(o.frame)
             returnType = FloatType()
-        elif type(exp2Type) is FloatType and type(exp1Type) is IntType:
+        elif type(exp2Type) is IntType and type(exp1Type) is FloatType:
             exp2Code += self.emit.emitI2F(o.frame)
             returnType = FloatType()
         else:
