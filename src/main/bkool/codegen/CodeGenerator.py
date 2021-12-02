@@ -73,7 +73,7 @@ class CodeGenVisitor(BaseVisitor):
         self.path = path
 
     def visitProgram(self, ast, c):
-        [self.visit(i,c)for i in ast.decl]
+        [self.visit(i, c) for i in ast.decl]
         return c
 
     def visitClassDecl(self, ast: ClassDecl, c):
@@ -84,8 +84,9 @@ class CodeGenVisitor(BaseVisitor):
         self.emit.printout(self.emit.emitPROLOG(self.className, self.parentName))
         
         [self.visit(ele, SubBody(None, self.env)) for ele in ast.memlist if type(ele) == MethodDecl]
+        
         # generate default constructor
-        self.genMETHOD(MethodDecl(Instance(),Id("<init>"), list(), None,Block([],[])), c, Frame("<init>", VoidType() ))
+        self.genMETHOD(MethodDecl(Instance(),Id("<init>"), list(), None, Block([],[])), self.env, Frame("<init>", VoidType()))
         self.emit.emitEPILOG()
         return c
     
@@ -99,7 +100,7 @@ class CodeGenVisitor(BaseVisitor):
             return Symbol(ast.variable.name, ast.varType, CName(self.className))
         else:
             idx = o.frame.getNewIndex()
-            code = self.emit.emitVAR(idx, ast.variable.name, ast.varType, o.frame.getStartLabel(), o.frame.getEndLabel())
+            code = self.emit.emitVAR(idx, ast.variable.name, ast.varType, o.frame.getStartLabel(), o.frame.getEndLabel(), o.frame)
             self.emit.printout(code)
             return Symbol(ast.variable.name, ast.varType, Index(idx))
     
@@ -120,23 +121,26 @@ class CodeGenVisitor(BaseVisitor):
         frame.enterScope(True)
 
         # Generate code for parameter declarations
+        local = SubBody(frame, [])
         if isInit:
-            self.emit.printout(self.emit.emitVAR(frame.getNewIndex(), "this", ClassType(Id(self.className)), frame.getStartLabel(), frame.getEndLabel(),frame))
+            self.emit.printout(self.emit.emitVAR(frame.getNewIndex(), "this", ClassType(Id(self.className)), frame.getStartLabel(), frame.getEndLabel(), frame))
         elif isMain:
-            self.emit.printout(self.emit.emitVAR(frame.getNewIndex(), "args", ArrayType(0,StringType()), frame.getStartLabel(), frame.getEndLabel(),frame))
+            self.emit.printout(self.emit.emitVAR(frame.getNewIndex(), "args", ArrayType(0,StringType()), frame.getStartLabel(), frame.getEndLabel(), frame))
         else:
-            local = reduce(lambda env,ele: SubBody(frame,[self.visit(ele,env)]+env.sym),consdecl.param,SubBody(frame,[]))
+            local = reduce(lambda env, ele: SubBody(frame, [self.visit(ele, env)] + env.sym), consdecl.param, local)
             o = local.sym + o
         
-        body = consdecl.body
-        # code here
+        # Generate code for local declarations
+        local = reduce(lambda env, ele: SubBody(frame, [self.visit(ele, env)] + env.sym), consdecl.body.decl, local)
+        o = local.sym + o
+        
         self.emit.printout(self.emit.emitLABEL(frame.getStartLabel(), frame))
 
         # Generate code for statements
         if isInit:
             self.emit.printout(self.emit.emitREADVAR("this", ClassType(Id(self.className)), 0, frame))
             self.emit.printout(self.emit.emitINVOKESPECIAL(frame))
-        list(map(lambda x: self.visit(x, SubBody(frame, o)), body.stmt))
+        list(map(lambda x: self.visit(x, SubBody(frame, o)), consdecl.body.stmt))
 
         self.emit.printout(self.emit.emitLABEL(frame.getEndLabel(), frame))
         if type(returnType) is VoidType:
