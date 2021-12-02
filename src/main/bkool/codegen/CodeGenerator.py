@@ -76,15 +76,27 @@ class CodeGenVisitor(BaseVisitor):
         [self.visit(i,c)for i in ast.decl]
         return c
 
-    def visitClassDecl(self,ast,c):
+    def visitClassDecl(self, ast: ClassDecl, c):
         self.className = ast.classname.name
         self.emit = Emitter(self.path+"/" + self.className + ".j")
-        self.emit.printout(self.emit.emitPROLOG(self.className, "java.lang.Object"))
+        
+        self.parentName = ast.parentname if ast.parentname else "java.lang.Object"
+        self.emit.printout(self.emit.emitPROLOG(self.className, self.parentName))
+        
         [self.visit(ele, SubBody(None, self.env)) for ele in ast.memlist if type(ele) == MethodDecl]
         # generate default constructor
         self.genMETHOD(MethodDecl(Instance(),Id("<init>"), list(), None,Block([],[])), c, Frame("<init>", VoidType() ))
         self.emit.emitEPILOG()
         return c
+    
+    def visitAttributeDecl(self, ast: AttributeDecl, o):
+        pass
+    
+    def visitVarDecl(self, ast: VarDecl, o):
+        pass
+    
+    def visitConstDecl(self, ast: ConstDecl, o):
+        pass
 
     def genMETHOD(self, consdecl, o, frame):
         isInit = consdecl.returnType is None
@@ -128,6 +140,36 @@ class CodeGenVisitor(BaseVisitor):
         frame = Frame(ast.name, ast.returnType)
         self.genMETHOD(ast, o.sym, frame)
         return Symbol(ast.name, MType([x.typ for x in ast.param], ast.returnType), CName(self.className))
+    
+    def visitStatic(self, ast: Static, o):
+        pass
+    
+    def visitInstance(self, ast: Instance, o):
+        pass
+    
+    def visitIntType(self, ast: IntType, o):
+        pass
+    
+    def visitBlock(self, ast, o):
+        return None
+    
+    def visitIf(self, ast, o):
+        return None
+    
+    def visitFor(self, ast, o):
+        return None
+    
+    def visitContinue(self, ast, o):
+        return None
+    
+    def visitBreak(self, ast, o):
+        return None
+    
+    def visitReturn(self, ast, o):
+        return None
+    
+    def visitAssign(self, ast, o):
+        return None
 
     def visitCallStmt(self, ast, o):
         ctxt = o
@@ -142,16 +184,51 @@ class CodeGenVisitor(BaseVisitor):
             in_ = (in_[0] + str1, in_[1].append(typ1))
         self.emit.printout(in_[0])
         self.emit.printout(self.emit.emitINVOKESTATIC(cname + "/" + ast.method.name, ctype, frame))
+        
+    def visitId(self, ast: Id, o):
+        pass
 
-    def visitIntLiteral(self,ast,o):
+    def visitBinaryOp(self, ast: BinaryOp, o):
+        e1c,e1t = self.visit(ast.left, o)
+        e2c,e2t = self.visit(ast.right, o)
+        
+        if ast.op in ['+', '-']:
+            code = self.emit.emitADDOP(ast.op, e1t, o.frame)
+            
+        return e1c + e2c + code, e1t
+    
+    def visitUnaryOp(self, ast: UnaryOp, o):
+        pass
+    
+    def visitCallExpr(self, ast: CallExpr, o):
+        pass
+    
+    def visitNewExpr(self, ast: NewExpr, o):
+        pass
+    
+    def visitArrayCell(self, ast: ArrayCell, o):
+        pass
+    
+    def visitFieldAccess(self, ast: FieldAccess, o):
+        pass
+    
+    def visitIntLiteral(self, ast, o):
         return self.emit.emitPUSHICONST(ast.value,o.frame),IntType()
     
     def visitFloatLiteral(self, ast, o):
         return self.emit.emitPUSHFCONST(ast.value, o.frame), FLoatType()
     
-    def visitBinaryOp(self, ast, o):
-        e1c,e1t = self.visit(ast.left,o)
-        e2c,e2t = self.visit(ast.right,o)
-        return e1c + e2c + self.emit.emitADDOP(ast.op,e1t,o.frame),e1t
-
-
+    def visitBooleanLiteral(self, ast, o):
+        pass
+    
+    def visitStringLiteral(self, ast, o):
+        pass
+    
+    def visitNullLiteral(self, ast, o):
+        return None
+    
+    def visitSelfLiteral(self, ast, o):
+        return None 
+        
+    def visitArrayLiteral(self, ast, o):
+        return None 
