@@ -90,27 +90,34 @@ class CodeGenVisitor(BaseVisitor):
         return c
     
     def visitAttributeDecl(self, ast: AttributeDecl, o):
-        pass
+        self.visit(ast.decl, o)
     
     def visitVarDecl(self, ast: VarDecl, o):
-        pass
+        if o.frame is None:
+            code = self.emit.emitATTRIBUTE(ast.variable.name, ast.varType, False)
+            self.emit.printout(code)
+            return Symbol(ast.variable.name, ast.varType, CName(self.className))
+        else:
+            idx = o.frame.getNewIndex()
+            code = self.emit.emitVAR(idx, ast.variable.name, ast.varType, o.frame.getStartLabel(), o.frame.getEndLabel())
+            self.emit.printout(code)
+            return Symbol(ast.variable.name, ast.varType, Index(idx))
     
     def visitConstDecl(self, ast: ConstDecl, o):
         pass
 
-    def genMETHOD(self, consdecl, o, frame):
+    def genMETHOD(self, consdecl: MethodDecl, o, frame):
         isInit = consdecl.returnType is None
+        isStatic = not isInit and type(consdecl.kind) is Static
         isMain = consdecl.name.name == "main" and len(consdecl.param) == 0 and type(consdecl.returnType) is VoidType
         returnType = VoidType() if isInit else consdecl.returnType
         methodName = "<init>" if isInit else consdecl.name.name
         intype = [ArrayType(0,StringType())] if isMain else list(map(lambda x: x.typ,consdecl.param))
         mtype = MType(intype, returnType)
 
-        self.emit.printout(self.emit.emitMETHOD(methodName, mtype, not isInit,frame))
+        self.emit.printout(self.emit.emitMETHOD(methodName, mtype, isStatic,frame))
 
         frame.enterScope(True)
-
-        glenv = o
 
         # Generate code for parameter declarations
         if isInit:
@@ -119,16 +126,17 @@ class CodeGenVisitor(BaseVisitor):
             self.emit.printout(self.emit.emitVAR(frame.getNewIndex(), "args", ArrayType(0,StringType()), frame.getStartLabel(), frame.getEndLabel(),frame))
         else:
             local = reduce(lambda env,ele: SubBody(frame,[self.visit(ele,env)]+env.sym),consdecl.param,SubBody(frame,[]))
-            glenv = local.sym+glenv
+            o = local.sym + o
         
         body = consdecl.body
+        # code here
         self.emit.printout(self.emit.emitLABEL(frame.getStartLabel(), frame))
 
         # Generate code for statements
         if isInit:
             self.emit.printout(self.emit.emitREADVAR("this", ClassType(Id(self.className)), 0, frame))
             self.emit.printout(self.emit.emitINVOKESPECIAL(frame))
-        list(map(lambda x: self.visit(x, SubBody(frame, glenv)), body.stmt))
+        list(map(lambda x: self.visit(x, SubBody(frame, o)), body.stmt))
 
         self.emit.printout(self.emit.emitLABEL(frame.getEndLabel(), frame))
         if type(returnType) is VoidType:
@@ -136,7 +144,8 @@ class CodeGenVisitor(BaseVisitor):
         self.emit.printout(self.emit.emitENDMETHOD(frame))
         frame.exitScope();
 
-    def visitMethodDecl(self, ast, o):
+    def visitMethodDecl(self, ast: MethodDecl, o):
+        # should be ast.name.name
         frame = Frame(ast.name, ast.returnType)
         self.genMETHOD(ast, o.sym, frame)
         return Symbol(ast.name, MType([x.typ for x in ast.param], ast.returnType), CName(self.className))
@@ -168,13 +177,15 @@ class CodeGenVisitor(BaseVisitor):
     def visitReturn(self, ast, o):
         return None
     
-    def visitAssign(self, ast, o):
-        return None
+    def visitAssign(self, ast: Assign, o):
+        expCode, expType = self.visit(ast.exp, Access(o.frame, o.sym, False))
+        self.emit.printout(expCode)
+        lhsCode, lhsType = self.visit(ast.lhs, Access(o.frame, o.sym, True))
+        self.emit.printout(lhsCode)
 
-    def visitCallStmt(self, ast, o):
-        ctxt = o
-        frame = ctxt.frame
-        nenv = ctxt.sym
+    def visitCallStmt(self, ast: CallStmt, o):
+        frame = o.frame
+        nenv = o.sym
         sym = next(filter(lambda x: ast.method.name == x.name,nenv),None)
         cname = sym.value.value    
         ctype = sym.mtype
@@ -186,7 +197,20 @@ class CodeGenVisitor(BaseVisitor):
         self.emit.printout(self.emit.emitINVOKESTATIC(cname + "/" + ast.method.name, ctype, frame))
         
     def visitId(self, ast: Id, o):
-        pass
+        sym: Symbol = next(filter(lambda x: ast.name == x.name, o.sym), None)
+        
+        if o.isLeft:
+            if type(sym.value) is Index:
+                code = self.emit.emitWRITEVAR(sym.name, sym.mtype, sym.value.value, o.frame)
+            else:
+                code = self.emit.emitPUTSTATIC(sym.value.value + "." + sym.name, sym.mtype, o.frame)
+        else:
+            if type(sym.value) is Index:
+                code = self.emit.emitREADVAR(sym.name, sym.mtype, sym.value.value, o.frame)
+            else:
+                code = self.emit.emitGETSTATIC(sym.value.value + "." + sym.name, sym.mtype, o.frame)
+        
+        return code, sym.mtype
 
     def visitBinaryOp(self, ast: BinaryOp, o):
         exp1Code, exp1Type = self.visit(ast.left, o)
@@ -205,7 +229,7 @@ class CodeGenVisitor(BaseVisitor):
             
         if ast.op in ['+', '-']:
             code = self.emit.emitADDOP(ast.op, returnType, o.frame)
-        elif ast.op in ['*', '/']:
+        elif ast.op in ['*', '/', '\\']:
             code = self.emit.emitMULOP(ast.op, returnType, o.frame)
         elif ast.op in ['>', '<', '==', '!=', '>=', '<=']:
             code = self.emit.emitREOP(ast.op, returnType, o.frame)
