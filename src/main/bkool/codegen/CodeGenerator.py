@@ -245,6 +245,8 @@ class CodeGenVisitor(BaseVisitor):
             code = self.emit.emitADDOP(ast.op, returnType, o.frame)
         elif ast.op in ['*', '/', '\\']:
             code = self.emit.emitMULOP(ast.op, returnType, o.frame)
+        elif ast.op in ['%']:
+            code = self.emit.emitMOD(o.frame)
         elif ast.op in ['>', '<', '==', '!=', '>=', '<=']:
             code = self.emit.emitREOP(ast.op, returnType, o.frame)
             
