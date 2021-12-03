@@ -111,6 +111,11 @@ class CodeGenVisitor(BaseVisitor):
             idx = o.frame.getNewIndex()
             code = self.emit.emitVAR(idx, ast.variable.name, ast.varType, o.frame.getStartLabel(), o.frame.getEndLabel(), o.frame)
             self.emit.printout(code)
+            if ast.varInit:
+                initCode, initType = self.visit(ast.varInit, Access(o.frame, o.sym, False))
+                self.emit.printout(initCode)
+                lhsCode, lhsType = self.visit(ast.variable, Access(o.frame, [Symbol(ast.variable.name, ast.varType, Index(idx))], True, True))
+                self.emit.printout(lhsCode)
             return Symbol(ast.variable.name, ast.varType, Index(idx))
     
     def visitConstDecl(self, ast: ConstDecl, o):
@@ -175,8 +180,22 @@ class CodeGenVisitor(BaseVisitor):
     def visitBlock(self, ast, o):
         return None
     
-    def visitIf(self, ast, o):
-        return None
+    def visitIf(self, ast: If, o):
+        expCode, expType = self.visit(ast.expr, Access(o.frame, o.sym, False))
+        self.emit.printout(expCode)
+        
+        falseLabel = o.frame.getNewLabel()
+        self.emit.printout(self.emit.emitIFFALSE(falseLabel, o.frame))
+        
+        self.visit(ast.thenStmt, o)
+        if not ast.elseStmt:
+            self.emit.printout(self.emit.emitLABEL(falseLabel, o.frame))
+        else:
+            nextLabel = o.frame.getNewLabel()
+            self.emit.printout(self.emit.emitGOTO(nextLabel, o.frame))
+            self.emit.printout(self.emit.emitLABEL(falseLabel, o.frame))
+            self.visit(ast.elseStmt, o)
+            self.emit.printout(self.emit.emitLABEL(nextLabel, o.frame))
     
     def visitFor(self, ast, o):
         return None

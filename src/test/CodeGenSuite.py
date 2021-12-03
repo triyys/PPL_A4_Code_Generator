@@ -88,14 +88,25 @@ class CheckCodeGenSuite(unittest.TestCase):
     #     expect = "-5"
     #     self.assertTrue(TestCodeGen.test(input,expect,509))
         
-    def test_bkool_mod(self):
+    # def test_bkool_mod(self):
+    #     input = """class BKoolClass {
+    #             static void main() {
+    #                 int a, b;
+    #                 a := 17;
+    #                 b := a % 3;
+    #                 io.writeInt(b);
+    #             }
+    #         }"""
+    #     expect = "2"
+    #     self.assertTrue(TestCodeGen.test(input,expect,510))
+        
+    def test_bkool_initial(self):
         input = """class BKoolClass {
                 static void main() {
-                    int a, b;
-                    a := 17;
-                    b := a % 3;
+                    int a = 10 + 7;
+                    int b = a % 3;
                     io.writeInt(b);
                 }
             }"""
         expect = "2"
-        self.assertTrue(TestCodeGen.test(input,expect,510))
+        self.assertTrue(TestCodeGen.test(input,expect,511))
