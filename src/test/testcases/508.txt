@@ -1,0 +1,7 @@
+class BKoolClass {
+                static void main() {
+                    string a;
+                    a := "ngoductri";
+                    io.writeStr(a);
+                }
+            }

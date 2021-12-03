@@ -27,11 +27,20 @@ class CodeGenerator:
         self.libName = "io"
 
     def init(self):
-        return [Symbol("readInt", MType(list(), IntType()), CName(self.libName)),
-                    Symbol("writeInt", MType([IntType()], VoidType()), CName(self.libName)),
-                    Symbol("writeIntLn", MType([IntType()], VoidType()), CName(self.libName)),
-                    Symbol("writeFloat", MType([FloatType()], VoidType()), CName(self.libName))
-                    ]
+        return [
+            Symbol("readInt", MType(list(), IntType()), CName(self.libName)),
+            Symbol("writeInt", MType([IntType()], VoidType()), CName(self.libName)),
+            Symbol("writeIntLn", MType([IntType()], VoidType()), CName(self.libName)),
+            Symbol("readFloat", MType(list(), FloatType()), CName(self.libName)),
+            Symbol("writeFloat", MType([FloatType()], VoidType()), CName(self.libName)),
+            Symbol("writeFloatLn", MType([FloatType()], VoidType()), CName(self.libName)),
+            Symbol("readBool", MType(list(), BoolType()), CName(self.libName)),
+            Symbol("writeBool", MType([BoolType()], VoidType()), CName(self.libName)),
+            Symbol("writeBoolLn", MType([BoolType()], VoidType()), CName(self.libName)),
+            Symbol("readStr", MType(list(), StringType()), CName(self.libName)),
+            Symbol("writeStr", MType([StringType()], VoidType()), CName(self.libName)),
+            Symbol("writeStrLn", MType([StringType()], VoidType()), CName(self.libName)),
+        ]
 
     def gen(self, ast,path):
         #ast: AST
@@ -246,6 +255,8 @@ class CodeGenVisitor(BaseVisitor):
         
         if ast.op in ['-']:
             code = self.emit.emitNEGOP(expType, o.frame)
+        elif ast.op in ['!']:
+            pass
         
         return expCode + code, expType
     
@@ -271,7 +282,7 @@ class CodeGenVisitor(BaseVisitor):
         pass
     
     def visitStringLiteral(self, ast, o):
-        pass
+        return self.emit.emitPUSHCONST(ast.value, StringType(), o.frame), StringType()
     
     def visitNullLiteral(self, ast, o):
         return None
