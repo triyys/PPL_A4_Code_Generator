@@ -242,7 +242,12 @@ class CodeGenVisitor(BaseVisitor):
         return exp1Code + exp2Code + code, returnType
     
     def visitUnaryOp(self, ast: UnaryOp, o):
-        pass
+        expCode, expType = self.visit(ast.body, o)
+        
+        if ast.op in ['-']:
+            code = self.emit.emitNEGOP(expType, o.frame)
+        
+        return expCode + code, expType
     
     def visitCallExpr(self, ast: CallExpr, o):
         pass

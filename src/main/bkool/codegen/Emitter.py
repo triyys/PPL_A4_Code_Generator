@@ -100,6 +100,8 @@ class Emitter():
         frame.pop()
         if type(in_) is IntType:
             return self.jvm.emitIALOAD()
+        elif type(in_) is FloatType:
+            return self.jvm.emitFALOAD()
         #elif type(in_) is cgen.ArrayPointerType or type(in_) is cgen.ClassType or type(in_) is StringType:
         elif type(in_) is ClassType or type(in_) is StringType:
             return self.jvm.emitAALOAD()
@@ -116,6 +118,8 @@ class Emitter():
         frame.pop()
         if type(in_) is IntType:
             return self.jvm.emitIASTORE()
+        elif type(in_) is FloatType:
+            return self.jvm.emitFASTORE()
         #elif type(in_) is cgen.ArrayPointerType or type(in_) is cgen.ClassType or type(in_) is StringType:
         elif type(in_) is ClassType or type(in_) is StringType:
             return self.jvm.emitAASTORE()

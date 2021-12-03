@@ -54,13 +54,35 @@ class CheckCodeGenSuite(unittest.TestCase):
     #     expect = "12"
     #     self.assertTrue(TestCodeGen.test(input,expect,506))
         
-    def test_bkool_vardecl1(self):
+    # def test_bkool_vardecl1(self):
+    #     input = """class BKoolClass {
+    #             static void main() {
+    #                 float a;
+    #                 a := 12.2;
+    #                 io.writeFloat(a);
+    #             }
+    #         }"""
+    #     expect = "12.2"
+    #     self.assertTrue(TestCodeGen.test(input,expect,507))
+    
+    # def test_bkool_vardecl2(self):
+    #     input = """class BKoolClass {
+    #             static void main() {
+    #                 string a;
+    #                 a := "ngoductri";
+    #             }
+    #         }"""
+    #     expect = "ngoductri"
+    #     self.assertTrue(TestCodeGen.test(input,expect,508))
+    
+    def test_bkool_unary_op(self):
         input = """class BKoolClass {
                 static void main() {
-                    float a;
-                    a := 12.2;
-                    io.writeFloat(a);
+                    int a, b;
+                    a := 5;
+                    b := -a;
+                    io.writeInt(b);
                 }
             }"""
-        expect = "12.2"
-        self.assertTrue(TestCodeGen.test(input,expect,507))
+        expect = "-5"
+        self.assertTrue(TestCodeGen.test(input,expect,509))
