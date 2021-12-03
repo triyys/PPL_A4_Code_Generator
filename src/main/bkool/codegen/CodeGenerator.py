@@ -178,8 +178,9 @@ class CodeGenVisitor(BaseVisitor):
     def visitBreak(self, ast, o):
         return None
     
-    def visitReturn(self, ast, o):
-        return None
+    def visitReturn(self, ast: Return, o):
+        expCode, expType = self.visit(ast.expr, o)
+        self.emit.emitRETURN(expType, o.frame)
     
     def visitAssign(self, ast: Assign, o):
         expCode, expType = self.visit(ast.exp, Access(o.frame, o.sym, False))

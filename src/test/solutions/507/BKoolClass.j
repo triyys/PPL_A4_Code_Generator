@@ -4,12 +4,12 @@
 
 .method public static main([Ljava/lang/String;)V
 .var 0 is args [Ljava/lang/String; from Label0 to Label1
-.var 1 is a I from Label0 to Label1
+.var 1 is a F from Label0 to Label1
 Label0:
-	bipush 12
-	istore_1
-	iload_1
-	invokestatic io/writeInt(I)V
+	ldc 12.2
+	fstore_1
+	fload_1
+	invokestatic io/writeFloat(F)V
 Label1:
 	return
 .limit stack 1
