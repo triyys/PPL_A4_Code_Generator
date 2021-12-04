@@ -121,7 +121,7 @@ class CodeGenVisitor(BaseVisitor):
     def visitConstDecl(self, ast: ConstDecl, o):
         pass
 
-    def genMETHOD(self, consdecl: MethodDecl, o, frame):
+    def genMETHOD(self, consdecl: MethodDecl, sym, frame):
         isInit = consdecl.returnType is None
         isStatic = not isInit and type(consdecl.kind) is Static
         isMain = consdecl.name.name == "main" and len(consdecl.param) == 0 and type(consdecl.returnType) is VoidType
@@ -142,11 +142,11 @@ class CodeGenVisitor(BaseVisitor):
             self.emit.printout(self.emit.emitVAR(frame.getNewIndex(), "args", ArrayType(0,StringType()), frame.getStartLabel(), frame.getEndLabel(), frame))
         else:
             local = reduce(lambda env, ele: SubBody(frame, [self.visit(ele, env)] + env.sym), consdecl.param, local)
-            o = local.sym + o
+            sym = local.sym + sym
         
         # Generate code for local declarations
         local = reduce(lambda env, ele: SubBody(frame, [self.visit(ele, env)] + env.sym), consdecl.body.decl, local)
-        o = local.sym + o
+        sym = local.sym + sym
         
         self.emit.printout(self.emit.emitLABEL(frame.getStartLabel(), frame))
 
@@ -154,7 +154,7 @@ class CodeGenVisitor(BaseVisitor):
         if isInit:
             self.emit.printout(self.emit.emitREADVAR("this", ClassType(Id(self.className)), 0, frame))
             self.emit.printout(self.emit.emitINVOKESPECIAL(frame))
-        list(map(lambda x: self.visit(x, SubBody(frame, o)), consdecl.body.stmt))
+        list(map(lambda x: self.visit(x, SubBody(frame, sym)), consdecl.body.stmt))
 
         self.emit.printout(self.emit.emitLABEL(frame.getEndLabel(), frame))
         if type(returnType) is VoidType:
@@ -177,8 +177,10 @@ class CodeGenVisitor(BaseVisitor):
     def visitIntType(self, ast: IntType, o):
         pass
     
-    def visitBlock(self, ast, o):
-        return None
+    def visitBlock(self, ast: Block, o):
+        local = SubBody(o.frame, [])
+        # [self.visit(x, []) for x in ast.decl]
+        [self.visit(x, SubBody(o.frame, o.sym)) for x in ast.stmt]
     
     def visitIf(self, ast: If, o):
         expCode, expType = self.visit(ast.expr, Access(o.frame, o.sym, False))

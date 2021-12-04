@@ -111,13 +111,41 @@ class CheckCodeGenSuite(unittest.TestCase):
     #     expect = "2"
     #     self.assertTrue(TestCodeGen.test(input,expect,511))
         
-    def test_bkool_ifstmt(self):
+    # def test_bkool_ifstmt1(self):
+    #     input = """class BKoolClass {
+    #             static void main() {
+    #                 int a = 10 + 7;
+    #                 int b = a % 3;
+    #                 if a % 2 == 1 then io.writeInt(b);
+    #             }
+    #         }"""
+    #     expect = "2"
+    #     self.assertTrue(TestCodeGen.test(input,expect,512))
+        
+    # def test_bkool_ifstmt2(self):
+    #     input = """class BKoolClass {
+    #             static void main() {
+    #                 int a = 10 + 7;
+    #                 int b = a % 3;
+    #                 if a % 2 != 1 then
+    #                     io.writeInt(b);
+    #                 else
+    #                     io.writeInt(a);
+    #             }
+    #         }"""
+    #     expect = "17"
+    #     self.assertTrue(TestCodeGen.test(input,expect,513))
+        
+    def test_bkool_ifstmt3(self):
         input = """class BKoolClass {
                 static void main() {
                     int a = 10 + 7;
                     int b = a % 3;
-                    if a % 2 == 1 then io.writeInt(b);
+                    if a % 2 != b - 1 then
+                        io.writeInt(b);
+                    else
+                        io.writeInt(a);
                 }
             }"""
-        expect = "2"
-        self.assertTrue(TestCodeGen.test(input,expect,512))
+        expect = "17"
+        self.assertTrue(TestCodeGen.test(input,expect,514))
