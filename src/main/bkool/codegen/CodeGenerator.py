@@ -277,7 +277,7 @@ class CodeGenVisitor(BaseVisitor):
         if ast.op in ['-']:
             code = self.emit.emitNEGOP(expType, o.frame)
         elif ast.op in ['!']:
-            pass
+            code = self.emit.emitNOT(BoolType(), o.frame)
         
         return expCode + code, expType
     

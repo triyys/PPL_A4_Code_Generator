@@ -100,13 +100,24 @@ class CheckCodeGenSuite(unittest.TestCase):
     #     expect = "2"
     #     self.assertTrue(TestCodeGen.test(input,expect,510))
         
-    def test_bkool_initial(self):
+    # def test_bkool_initial(self):
+    #     input = """class BKoolClass {
+    #             static void main() {
+    #                 int a = 10 + 7;
+    #                 int b = a % 3;
+    #                 io.writeInt(b);
+    #             }
+    #         }"""
+    #     expect = "2"
+    #     self.assertTrue(TestCodeGen.test(input,expect,511))
+        
+    def test_bkool_ifstmt(self):
         input = """class BKoolClass {
                 static void main() {
                     int a = 10 + 7;
                     int b = a % 3;
-                    io.writeInt(b);
+                    if a % 2 == 1 then io.writeInt(b);
                 }
             }"""
         expect = "2"
-        self.assertTrue(TestCodeGen.test(input,expect,511))
+        self.assertTrue(TestCodeGen.test(input,expect,512))
