@@ -136,16 +136,51 @@ class CheckCodeGenSuite(unittest.TestCase):
     #     expect = "17"
     #     self.assertTrue(TestCodeGen.test(input,expect,513))
         
-    def test_bkool_ifstmt3(self):
+    # def test_bkool_ifstmt3(self):
+    #     input = """class BKoolClass {
+    #             static void main() {
+    #                 int a = 10 + 7;
+    #                 int b = a % 3;
+    #                 if a % 2 != b - 1 then
+    #                     io.writeInt(b);
+    #                 else
+    #                     io.writeInt(a);
+    #             }
+    #         }"""
+    #     expect = "17"
+    #     self.assertTrue(TestCodeGen.test(input,expect,514))
+        
+    # def test_bkool_block1(self):
+    #     input = """class BKoolClass {
+    #             static void main() {
+    #                 int a = 10 + 7;
+    #                 int b = a % 3;
+    #                 if a % 2 == b - 2 then {
+    #                     io.writeInt(b);
+    #                 }
+    #                 else {
+    #                     int c = 5;
+    #                     io.writeInt(c);
+    #                 }
+    #             }
+    #         }"""
+    #     expect = "5"
+    #     self.assertTrue(TestCodeGen.test(input,expect,515))
+        
+    def test_bkool_block2(self):
         input = """class BKoolClass {
                 static void main() {
                     int a = 10 + 7;
                     int b = a % 3;
-                    if a % 2 != b - 1 then
+                    if a % 2 == b - 2 then {
                         io.writeInt(b);
-                    else
-                        io.writeInt(a);
+                    }
+                    else {
+                        int c = 5;
+                        io.writeInt(c);
+                    }
+                    io.writeInt(a);
                 }
             }"""
-        expect = "17"
-        self.assertTrue(TestCodeGen.test(input,expect,514))
+        expect = "517"
+        self.assertTrue(TestCodeGen.test(input,expect,516))

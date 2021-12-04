@@ -168,19 +168,19 @@ class CodeGenVisitor(BaseVisitor):
         self.genMETHOD(ast, o.sym, frame)
         return Symbol(ast.name, MType([x.typ for x in ast.param], ast.returnType), CName(self.className))
     
-    def visitStatic(self, ast: Static, o):
-        pass
-    
-    def visitInstance(self, ast: Instance, o):
-        pass
-    
-    def visitIntType(self, ast: IntType, o):
-        pass
-    
     def visitBlock(self, ast: Block, o):
         local = SubBody(o.frame, [])
-        # [self.visit(x, []) for x in ast.decl]
+        
+        # Generate code for local declarations
+        local = reduce(lambda env, ele: SubBody(o.frame, [self.visit(ele, env)] + env.sym), ast.decl, local)
+        o.sym = local.sym + o.sym
+        
+        self.emit.printout(self.emit.emitLABEL(o.frame.getStartLabel(), o.frame))
+        
+        # Generate code for statements
         [self.visit(x, SubBody(o.frame, o.sym)) for x in ast.stmt]
+        
+        self.emit.printout(self.emit.emitLABEL(o.frame.getEndLabel(), o.frame))
     
     def visitIf(self, ast: If, o):
         expCode, expType = self.visit(ast.expr, Access(o.frame, o.sym, False))
@@ -189,7 +189,9 @@ class CodeGenVisitor(BaseVisitor):
         falseLabel = o.frame.getNewLabel()
         self.emit.printout(self.emit.emitIFFALSE(falseLabel, o.frame))
         
+        # Generate code for then statement
         self.visit(ast.thenStmt, o)
+        
         if not ast.elseStmt:
             self.emit.printout(self.emit.emitLABEL(falseLabel, o.frame))
         else:

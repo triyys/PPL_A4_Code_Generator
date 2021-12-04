@@ -1,0 +1,14 @@
+class BKoolClass {
+                static void main() {
+                    int a = 10 + 7;
+                    int b = a % 3;
+                    if a % 2 == b - 2 then {
+                        io.writeInt(b);
+                    }
+                    else {
+                        int c = 5;
+                        io.writeInt(c);
+                    }
+                    io.writeInt(a);
+                }
+            }
