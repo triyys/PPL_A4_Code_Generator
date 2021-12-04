@@ -119,7 +119,21 @@ class CodeGenVisitor(BaseVisitor):
             return Symbol(ast.variable.name, ast.varType, Index(idx))
     
     def visitConstDecl(self, ast: ConstDecl, o):
-        pass
+        if o.frame is None:
+            code = self.emit.emitATTRIBUTE(ast.constant.name, ast.constType, True)
+            self.emit.printout(code)
+            return Symbol(ast.constant.name, ast.constType, CName(self.className))
+        else:
+            idx = o.frame.getNewIndex()
+            code = self.emit.emitVAR(idx, ast.constant.name, ast.constType, o.frame.getStartLabel(), o.frame.getEndLabel(), o.frame)
+            self.emit.printout(code)
+            
+            # handle for initial value
+            initCode, initType = self.visit(ast.value, Access(o.frame, o.sym, False))
+            self.emit.printout(initCode)
+            lhsCode, lhsType = self.visit(ast.constant, Access(o.frame, [Symbol(ast.constant.name, ast.constType, Index(idx))], True, True))
+            self.emit.printout(lhsCode)
+            return Symbol(ast.constant.name, ast.constType, Index(idx))
 
     def genMETHOD(self, consdecl: MethodDecl, sym, frame):
         isInit = consdecl.returnType is None
@@ -142,31 +156,34 @@ class CodeGenVisitor(BaseVisitor):
             self.emit.printout(self.emit.emitVAR(frame.getNewIndex(), "args", ArrayType(0,StringType()), frame.getStartLabel(), frame.getEndLabel(), frame))
         else:
             local = reduce(lambda env, ele: SubBody(frame, [self.visit(ele, env)] + env.sym), consdecl.param, local)
-            sym = local.sym + sym
         
         # Generate code for local declarations
         local = reduce(lambda env, ele: SubBody(frame, [self.visit(ele, env)] + env.sym), consdecl.body.decl, local)
-        sym = local.sym + sym
         
         self.emit.printout(self.emit.emitLABEL(frame.getStartLabel(), frame))
+        
+        # Generate for recursive and for return
+        symMethod = Symbol(consdecl.name.name, mtype, CName(self.className))
 
         # Generate code for statements
         if isInit:
             self.emit.printout(self.emit.emitREADVAR("this", ClassType(Id(self.className)), 0, frame))
             self.emit.printout(self.emit.emitINVOKESPECIAL(frame))
-        list(map(lambda x: self.visit(x, SubBody(frame, sym)), consdecl.body.stmt))
+        list(map(lambda x: self.visit(x, SubBody(frame, local.sym + sym)), consdecl.body.stmt))
 
         self.emit.printout(self.emit.emitLABEL(frame.getEndLabel(), frame))
         if type(returnType) is VoidType:
             self.emit.printout(self.emit.emitRETURN(VoidType(), frame))
         self.emit.printout(self.emit.emitENDMETHOD(frame))
         frame.exitScope();
+        
+        return symMethod
 
     def visitMethodDecl(self, ast: MethodDecl, o):
         # should be ast.name.name
         frame = Frame(ast.name, ast.returnType)
-        self.genMETHOD(ast, o.sym, frame)
-        return Symbol(ast.name, MType([x.typ for x in ast.param], ast.returnType), CName(self.className))
+        return self.genMETHOD(ast, o.sym, frame)
+        # return Symbol(ast.name, MType([x.typ for x in ast.param], ast.returnType), CName(self.className))
     
     def visitBlock(self, ast: Block, o):
         local = SubBody(o.frame, [])
@@ -201,8 +218,26 @@ class CodeGenVisitor(BaseVisitor):
             self.visit(ast.elseStmt, o)
             self.emit.printout(self.emit.emitLABEL(nextLabel, o.frame))
     
-    def visitFor(self, ast, o):
-        return None
+    def visitFor(self, ast: For, o):
+        exp1Code, exp1Type = self.visit(ast.expr1, Access(o.frame, o.sym, False))
+        self.emit.printout(exp1Code)
+        exp2Code, exp2Type = self.visit(ast.expr2, Access(o.frame, o.sym, False))
+        self.emit.printout(exp2Code)
+        
+        falseLabel = o.frame.getNewLabel()
+        self.emit.printout(self.emit.emitIFFALSE(falseLabel, o.frame))
+        
+        # Generate code for loop statement
+        self.visit(ast.loop, o)
+        
+        if not ast.elseStmt:
+            self.emit.printout(self.emit.emitLABEL(falseLabel, o.frame))
+        else:
+            nextLabel = o.frame.getNewLabel()
+            self.emit.printout(self.emit.emitGOTO(nextLabel, o.frame))
+            self.emit.printout(self.emit.emitLABEL(falseLabel, o.frame))
+            self.visit(ast.elseStmt, o)
+            self.emit.printout(self.emit.emitLABEL(nextLabel, o.frame))
     
     def visitContinue(self, ast, o):
         return None
@@ -298,13 +333,14 @@ class CodeGenVisitor(BaseVisitor):
         pass
     
     def visitIntLiteral(self, ast, o):
-        return self.emit.emitPUSHICONST(ast.value,o.frame), IntType()
+        return self.emit.emitPUSHICONST(ast.value, o.frame), IntType()
     
     def visitFloatLiteral(self, ast, o):
         return self.emit.emitPUSHFCONST(str(ast.value), o.frame), FloatType()
     
     def visitBooleanLiteral(self, ast, o):
-        pass
+        value = "true" if ast.value else "false"
+        return self.emit.emitPUSHICONST(value, o.frame), BoolType()
     
     def visitStringLiteral(self, ast, o):
         return self.emit.emitPUSHCONST(ast.value, StringType(), o.frame), StringType()

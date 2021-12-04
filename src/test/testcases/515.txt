@@ -9,6 +9,5 @@ class BKoolClass {
                         int c = 5;
                         io.writeInt(c);
                     }
-                    io.writeInt(a);
                 }
             }

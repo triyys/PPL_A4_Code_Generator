@@ -42,8 +42,6 @@ Label0:
 	invokestatic io/writeInt(I)V
 Label1:
 Label5:
-	iload_1
-	invokestatic io/writeInt(I)V
 Label1:
 	return
 .limit stack 3
