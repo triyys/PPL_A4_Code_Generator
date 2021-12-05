@@ -67,8 +67,8 @@ class Emitter():
         f = float(in_)
         frame.push()
         rst = "{0:.4f}".format(f)
-        if rst == "0.0" or rst == "1.0" or rst == "2.0":
-            return self.jvm.emitFCONST(rst)
+        if rst == "0.0000" or rst == "1.0000" or rst == "2.0000":
+            return self.jvm.emitFCONST(rst[:3])
         else:
             return self.jvm.emitLDC(in_)           
 
