@@ -92,6 +92,7 @@ class CodeGenVisitor(BaseVisitor):
         self.parentName = ast.parentname if ast.parentname else "java.lang.Object"
         self.emit.printout(self.emit.emitPROLOG(self.className, self.parentName))
         
+        [self.visit(ele, None) for ele in ast.memlist if type(ele) == AttributeDecl]
         [self.visit(ele, SubBody(None, self.env)) for ele in ast.memlist if type(ele) == MethodDecl]
         
         # generate default constructor
@@ -149,7 +150,7 @@ class CodeGenVisitor(BaseVisitor):
         frame.enterScope(True)
 
         # Generate code for parameter declarations
-        local = SubBody(frame, [])
+        local = SubBody(frame, sym)
         if isInit:
             self.emit.printout(self.emit.emitVAR(frame.getNewIndex(), "this", ClassType(Id(self.className)), frame.getStartLabel(), frame.getEndLabel(), frame))
         elif isMain:
@@ -169,7 +170,7 @@ class CodeGenVisitor(BaseVisitor):
         if isInit:
             self.emit.printout(self.emit.emitREADVAR("this", ClassType(Id(self.className)), 0, frame))
             self.emit.printout(self.emit.emitINVOKESPECIAL(frame))
-        list(map(lambda x: self.visit(x, SubBody(frame, local.sym + sym)), consdecl.body.stmt))
+        list(map(lambda x: self.visit(x, SubBody(frame, [symMethod] + local.sym)), consdecl.body.stmt))
 
         self.emit.printout(self.emit.emitLABEL(frame.getEndLabel(), frame))
         if type(returnType) is VoidType:
@@ -186,16 +187,15 @@ class CodeGenVisitor(BaseVisitor):
         # return Symbol(ast.name, MType([x.typ for x in ast.param], ast.returnType), CName(self.className))
     
     def visitBlock(self, ast: Block, o):
-        local = SubBody(o.frame, [])
+        local = SubBody(o.frame, o.sym)
         
         # Generate code for local declarations
         local = reduce(lambda env, ele: SubBody(o.frame, [self.visit(ele, env)] + env.sym), ast.decl, local)
-        o.sym = local.sym + o.sym
         
         self.emit.printout(self.emit.emitLABEL(o.frame.getStartLabel(), o.frame))
         
         # Generate code for statements
-        [self.visit(x, SubBody(o.frame, o.sym)) for x in ast.stmt]
+        [self.visit(x, SubBody(o.frame, local.sym)) for x in ast.stmt]
         
         self.emit.printout(self.emit.emitLABEL(o.frame.getEndLabel(), o.frame))
     
@@ -286,7 +286,36 @@ class CodeGenVisitor(BaseVisitor):
 
     def visitBinaryOp(self, ast: BinaryOp, o):
         exp1Code, exp1Type = self.visit(ast.left, o)
+        
+        if ast.op in ['&&', '||']:
+            # The label after the second expression code
+            resLabel = o.frame.getNextLabel()
+            # The last label of this BinaryOp code generation
+            nextLabel = o.frame.getNextLabel()
+            
+            # First evaluation
+            if ast.op == '&&':
+                controlCode = self.emit.emitIFFALSE(resLabel, o.frame)
+            else:
+                controlCode = self.emit.emitIFTRUE(resLabel, o.frame)
+            
         exp2Code, exp2Type = self.visit(ast.right, o)
+        
+        if ast.op in ['&&', '||']:
+            # goto instruction when skipping the second expression
+            gotoCode = self.emit.emitGOTO(nextLabel, o.frame)
+            
+            # Generate the resLabel above and code for pushing true or false
+            resCode = self.emit.emitLABEL(resLabel, o.frame)
+            if ast.op == '&&':
+                falseCode = self.emit.emitPUSHICONST("false", o.frame)
+            else:
+                falseCode = self.emit.emitPUSHICONST("true", o.frame)
+                
+            # Generate the last label
+            nextCode = self.emit.emitLABEL(nextLabel, o.frame)
+                
+            return exp1Code + controlCode + exp2Code + gotoCode + resCode + falseCode + nextCode, BoolType()
         
         if type(exp1Type) is type(exp2Type):
             returnType = exp1Type
