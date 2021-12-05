@@ -1,0 +1,6 @@
+class BKoolClass {
+                static void main() {
+                    int b = 5;
+                    for x := 10 downto 14 do io.writeInt(b);
+                }
+            }

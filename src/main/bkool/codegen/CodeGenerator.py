@@ -186,7 +186,7 @@ class CodeGenVisitor(BaseVisitor):
         return self.genMETHOD(ast, o.sym, frame)
         # return Symbol(ast.name, MType([x.typ for x in ast.param], ast.returnType), CName(self.className))
     
-    def visitBlock(self, ast: Block, o):
+    def visitBlock(self, ast: Block, o: SubBody):
         local = SubBody(o.frame, o.sym)
         
         # Generate code for local declarations
@@ -199,7 +199,7 @@ class CodeGenVisitor(BaseVisitor):
         
         self.emit.printout(self.emit.emitLABEL(o.frame.getEndLabel(), o.frame))
     
-    def visitIf(self, ast: If, o):
+    def visitIf(self, ast: If, o: SubBody):
         expCode, expType = self.visit(ast.expr, Access(o.frame, o.sym, False))
         self.emit.printout(expCode)
         
@@ -218,26 +218,32 @@ class CodeGenVisitor(BaseVisitor):
             self.visit(ast.elseStmt, o)
             self.emit.printout(self.emit.emitLABEL(nextLabel, o.frame))
     
-    def visitFor(self, ast: For, o):
-        exp1Code, exp1Type = self.visit(ast.expr1, Access(o.frame, o.sym, False))
-        self.emit.printout(exp1Code)
-        exp2Code, exp2Type = self.visit(ast.expr2, Access(o.frame, o.sym, False))
-        self.emit.printout(exp2Code)
+    def visitFor(self, ast: For, o: SubBody):
+        operator, condition = ('+', '<=') if ast.up else ('-', '>=')
         
+        # Initial scalar variable
+        o.sym = [self.visit(VarDecl(ast.id, IntType(), ast.expr1), o)] + o.sym
+        
+        startLabel = o.frame.getNewLabel()
         falseLabel = o.frame.getNewLabel()
+        # Generate start label
+        self.emit.printout(self.emit.emitLABEL(startLabel, o.frame))
+        
+        # Generate code for pushing a bool value to the stack
+        conditionCode, conditionType = self.visit(BinaryOp(condition, ast.id, ast.expr2), Access(o.frame, o.sym, False))
+        self.emit.printout(conditionCode)
+        
+        # Generate code for branch condition
         self.emit.printout(self.emit.emitIFFALSE(falseLabel, o.frame))
         
         # Generate code for loop statement
         self.visit(ast.loop, o)
+        self.visit(Assign(ast.id, BinaryOp(operator, ast.id, IntLiteral(1))), o)
         
-        if not ast.elseStmt:
-            self.emit.printout(self.emit.emitLABEL(falseLabel, o.frame))
-        else:
-            nextLabel = o.frame.getNewLabel()
-            self.emit.printout(self.emit.emitGOTO(nextLabel, o.frame))
-            self.emit.printout(self.emit.emitLABEL(falseLabel, o.frame))
-            self.visit(ast.elseStmt, o)
-            self.emit.printout(self.emit.emitLABEL(nextLabel, o.frame))
+        # Generate goto code for rechecking condition
+        self.emit.printout(self.emit.emitGOTO(startLabel, o.frame))
+        
+        self.emit.printout(self.emit.emitLABEL(falseLabel, o.frame))
     
     def visitContinue(self, ast, o):
         return None

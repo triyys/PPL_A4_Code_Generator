@@ -214,16 +214,58 @@ class CheckCodeGenSuite(unittest.TestCase):
     #     expect = "10"
     #     self.assertTrue(TestCodeGen.test(input,expect,518))
         
-    def test_bkool_constant3(self):
+    # def test_bkool_constant3(self):
+    #     input = """class BKoolClass {
+    #             static void main() {
+    #                 final int a = 10 + 7;
+    #                 int b = a % 3;
+    #                 if a % 2 == b - 1 then {
+    #                     final int c = 12 - a;
+    #                     io.writeInt(c);
+    #                 }
+    #             }
+    #         }"""
+    #     expect = "-5"
+    #     self.assertTrue(TestCodeGen.test(input,expect,519))
+        
+    # def test_bkool_forstmt1(self):
+    #     input = """class BKoolClass {
+    #             static void main() {
+    #                 int b = 5;
+    #                 for x := 10 to 14 do io.writeInt(b);
+    #             }
+    #         }"""
+    #     expect = "55555"
+    #     self.assertTrue(TestCodeGen.test(input,expect,520))
+        
+    # def test_bkool_forstmt2(self):
+    #     input = """class BKoolClass {
+    #             static void main() {
+    #                 int b = 5;
+    #                 for x := 10 downto 14 do io.writeInt(b);
+    #             }
+    #         }"""
+    #     expect = ""
+    #     self.assertTrue(TestCodeGen.test(input,expect,521))
+        
+    # def test_bkool_forstmt3(self):
+    #     input = """class BKoolClass {
+    #             static void main() {
+    #                 int b = 5;
+    #                 for x := -2 downto -5 do io.writeInt(b);
+    #             }
+    #         }"""
+    #     expect = "5555"
+    #     self.assertTrue(TestCodeGen.test(input,expect,522))
+        
+    def test_bkool_forstmt4(self):
         input = """class BKoolClass {
                 static void main() {
-                    final int a = 10 + 7;
-                    int b = a % 3;
-                    if a % 2 == b - 1 then {
-                        final int c = 12 - a;
-                        io.writeInt(c);
+                    int b = 5;
+                    for x := -2 to -5 do {
+                        io.writeInt(b);
                     }
                 }
             }"""
-        expect = "-5"
-        self.assertTrue(TestCodeGen.test(input,expect,519))
+        expect = ""
+        self.assertTrue(TestCodeGen.test(input,expect,523))
