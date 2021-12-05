@@ -12,7 +12,15 @@ Label0:
 	iconst_2
 	ineg
 	istore_2
+	iload_2
+	iconst_1
+	isub
+	istore_2
 Label2:
+	iload_2
+	iconst_1
+	iadd
+	istore_2
 	iload_2
 	iconst_5
 	ineg
@@ -27,15 +35,11 @@ Label0:
 	iload_1
 	invokestatic io/writeInt(I)V
 Label1:
-	iload_2
-	iconst_1
-	iadd
-	istore_2
 	goto Label2
 Label3:
 Label1:
 	return
-.limit stack 4
+.limit stack 3
 .limit locals 3
 .end method
 

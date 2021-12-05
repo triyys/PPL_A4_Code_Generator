@@ -8,34 +8,49 @@
 	iconst_5
 	istore_1
 Label0:
-.var 2 is x I from Label0 to Label1
-	bipush 10
-	istore_2
-	iload_2
+.var 2 is i I from Label0 to Label1
 	iconst_1
-	iadd
 	istore_2
-Label2:
 	iload_2
 	iconst_1
 	isub
 	istore_2
+Label2:
 	iload_2
-	bipush 14
-	if_icmplt Label4
+	iconst_1
+	iadd
+	istore_2
+	iload_2
+	iconst_5
+	if_icmpgt Label4
 	iconst_1
 	goto Label5
 Label4:
 	iconst_0
 Label5:
 	ifle Label3
-	iload_1
+Label0:
+	iload_2
+	iconst_3
+	if_icmpne Label6
+	iconst_1
+	goto Label7
+Label6:
+	iconst_0
+Label7:
+	ifle Label8
+	goto Label3
+	goto Label9
+Label8:
+	iload_2
 	invokestatic io/writeInt(I)V
+Label9:
+Label1:
 	goto Label2
 Label3:
 Label1:
 	return
-.limit stack 3
+.limit stack 5
 .limit locals 3
 .end method
 

@@ -53,9 +53,10 @@ class CodeGenerator:
 
 
 class SubBody():
-    def __init__(self, frame, sym):
+    def __init__(self, frame, sym, label = None):
         self.frame = frame
         self.sym = sym
+        self.label = label
 
 class Access():
     def __init__(self, frame, sym, isLeft, isFirst = False):
@@ -224,15 +225,19 @@ class CodeGenVisitor(BaseVisitor):
             self.emit.printout(self.emit.emitLABEL(nextLabel, o.frame))
     
     def visitFor(self, ast: For, o: SubBody):
-        operator, condition = ('+', '<=') if ast.up else ('-', '>=')
+        operator, condition, noperator = ('+', '<=', '-') if ast.up else ('-', '>=', '+')
         
         # Initial scalar variable
         o.sym = [self.visit(VarDecl(ast.id, IntType(), ast.expr1), o)] + o.sym
+        self.visit(Assign(ast.id, BinaryOp(noperator, ast.id, IntLiteral(1))), o)
         
         startLabel = o.frame.getNewLabel()
         falseLabel = o.frame.getNewLabel()
+        o.sym.append(Symbol({"start": startLabel, "false": falseLabel}, ast))
         # Generate start label
         self.emit.printout(self.emit.emitLABEL(startLabel, o.frame))
+        
+        self.visit(Assign(ast.id, BinaryOp(operator, ast.id, IntLiteral(1))), o)
         
         # Generate code for pushing a bool value to the stack
         conditionCode, conditionType = self.visit(BinaryOp(condition, ast.id, ast.expr2), Access(o.frame, o.sym, False))
@@ -243,18 +248,17 @@ class CodeGenVisitor(BaseVisitor):
         
         # Generate code for loop statement
         self.visit(ast.loop, o)
-        self.visit(Assign(ast.id, BinaryOp(operator, ast.id, IntLiteral(1))), o)
         
         # Generate goto code for rechecking condition
         self.emit.printout(self.emit.emitGOTO(startLabel, o.frame))
         
         self.emit.printout(self.emit.emitLABEL(falseLabel, o.frame))
     
-    def visitContinue(self, ast, o):
-        return None
+    def visitContinue(self, ast, o: SubBody):
+        self.emit.printout(self.emit.emitGOTO(o.sym.pop().name['start'], o.frame))
     
-    def visitBreak(self, ast, o):
-        return None
+    def visitBreak(self, ast, o: SubBody):
+        self.emit.printout(self.emit.emitGOTO(o.sym.pop().name['false'], o.frame))
     
     def visitReturn(self, ast: Return, o):
         expCode, expType = self.visit(ast.expr, o)

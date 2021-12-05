@@ -11,7 +11,15 @@ Label0:
 .var 2 is x I from Label0 to Label1
 	bipush 10
 	istore_2
+	iload_2
+	iconst_1
+	isub
+	istore_2
 Label2:
+	iload_2
+	iconst_1
+	iadd
+	istore_2
 	iload_2
 	bipush 14
 	if_icmpgt Label4
@@ -23,15 +31,11 @@ Label5:
 	ifle Label3
 	iload_1
 	invokestatic io/writeInt(I)V
-	iload_2
-	iconst_1
-	iadd
-	istore_2
 	goto Label2
 Label3:
 Label1:
 	return
-.limit stack 4
+.limit stack 3
 .limit locals 3
 .end method
 
