@@ -92,8 +92,9 @@ class CodeGenVisitor(BaseVisitor):
         self.parentName = ast.parentname if ast.parentname else "java.lang.Object"
         self.emit.printout(self.emit.emitPROLOG(self.className, self.parentName))
         
-        [self.visit(ele, SubBody(None, self.env)) for ele in ast.memlist if type(ele) == AttributeDecl]
-        [self.visit(ele, SubBody(None, self.env)) for ele in ast.memlist if type(ele) == MethodDecl]
+        classEnv = reduce(lambda env, ele: SubBody(None, [self.visit(ele, env)] + env.sym), ast.memlist, SubBody(None, self.env))
+        # [self.visit(ele, SubBody(None, self.env)) for ele in ast.memlist if type(ele) == AttributeDecl]
+        # [self.visit(ele, SubBody(None, self.env)) for ele in ast.memlist if type(ele) == MethodDecl]
         
         # generate default constructor
         self.genMETHOD(MethodDecl(Instance(),Id("<init>"), list(), None, Block([],[])), self.env, Frame("<init>", VoidType()))
@@ -272,17 +273,15 @@ class CodeGenVisitor(BaseVisitor):
         self.emit.printout(lhsCode)
 
     def visitCallStmt(self, ast: CallStmt, o: SubBody):
-        frame = o.frame
-        nenv = o.sym
-        sym = next(filter(lambda x: ast.method.name == x.name,nenv),None)
-        cname = sym.value.value    
-        ctype = sym.mtype
+        sym = next(filter(lambda x: ast.method.name == x.name, o.sym), None)
+        
         in_ = ("", list())
         for x in ast.param:
-            str1, typ1 = self.visit(x, Access(frame, nenv, False, True))
+            str1, typ1 = self.visit(x, Access(o.frame, o.sym, False, True))
             in_ = (in_[0] + str1, in_[1].append(typ1))
+            
         self.emit.printout(in_[0])
-        self.emit.printout(self.emit.emitINVOKESTATIC(cname + "/" + ast.method.name, ctype, frame))
+        self.emit.printout(self.emit.emitINVOKESTATIC(sym.value.value + "/" + ast.method.name, sym.mtype, o.frame))
         
     def visitId(self, ast: Id, o):
         sym: Symbol = next(filter(lambda x: ast.name == x.name, o.sym), None)
