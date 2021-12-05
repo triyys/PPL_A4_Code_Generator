@@ -332,3 +332,17 @@ class CheckCodeGenSuite(unittest.TestCase):
             }"""
         expect = "1245"
         self.assertTrue(TestCodeGen.test(input,expect,528))
+        
+    # def test_bkool_instance_field1(self):
+    #     input = """class BKoolClass {
+    #             static final int a = 10;
+    #             static int foo(int a) {
+    #                 return a;
+    #             }
+    #             static void main() {
+    #                 int b = 5;
+    #                 BKoolClass.foo(10);
+    #             }
+    #         }"""
+    #     expect = ""
+    #     self.assertTrue(TestCodeGen.test(input,expect,529))

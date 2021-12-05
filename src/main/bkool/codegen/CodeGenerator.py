@@ -53,10 +53,9 @@ class CodeGenerator:
 
 
 class SubBody():
-    def __init__(self, frame, sym, label = None):
+    def __init__(self, frame, sym):
         self.frame = frame
         self.sym = sym
-        self.label = label
 
 class Access():
     def __init__(self, frame, sym, isLeft, isFirst = False):
@@ -148,7 +147,7 @@ class CodeGenVisitor(BaseVisitor):
         isMain = consdecl.name.name == "main" and len(consdecl.param) == 0 and type(consdecl.returnType) is VoidType
         returnType = VoidType() if isInit else consdecl.returnType
         methodName = "<init>" if isInit else consdecl.name.name
-        intype = [ArrayType(0,StringType())] if isMain else list(map(lambda x: x.typ,consdecl.param))
+        intype = [ArrayType(0, StringType())] if isMain else list(map(lambda x: x.varType, consdecl.param))
         mtype = MType(intype, returnType)
 
         self.emit.printout(self.emit.emitMETHOD(methodName, mtype, isStatic,frame))
@@ -260,9 +259,11 @@ class CodeGenVisitor(BaseVisitor):
     def visitBreak(self, ast, o: SubBody):
         self.emit.printout(self.emit.emitGOTO(o.sym.pop().name['false'], o.frame))
     
-    def visitReturn(self, ast: Return, o):
-        expCode, expType = self.visit(ast.expr, o)
-        self.emit.emitRETURN(expType, o.frame)
+    def visitReturn(self, ast: Return, o: SubBody):
+        expCode, expType = self.visit(ast.expr, Access(o.frame, o.sym, False))
+        returnCode = self.emit.emitRETURN(expType, o.frame)
+        
+        self.emit.printout(expCode + returnCode)
     
     def visitAssign(self, ast: Assign, o):
         expCode, expType = self.visit(ast.exp, Access(o.frame, o.sym, False))
@@ -270,7 +271,7 @@ class CodeGenVisitor(BaseVisitor):
         lhsCode, lhsType = self.visit(ast.lhs, Access(o.frame, o.sym, True))
         self.emit.printout(lhsCode)
 
-    def visitCallStmt(self, ast: CallStmt, o):
+    def visitCallStmt(self, ast: CallStmt, o: SubBody):
         frame = o.frame
         nenv = o.sym
         sym = next(filter(lambda x: ast.method.name == x.name,nenv),None)
