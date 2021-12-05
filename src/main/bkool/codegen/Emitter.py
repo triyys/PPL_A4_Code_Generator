@@ -667,6 +667,14 @@ class Emitter():
 
     def clearBuff(self):
         self.buff.clear()
+        
+    def emitNEWEXP(self, lexeme):
+        #lexeme: String
+        
+        return self.jvm.emitNEW(lexeme)
+    
+    def emitPUSHNULL(self):
+        return self.jvm.emitPUSHNULL()
 
 
 

@@ -365,10 +365,22 @@ class CodeGenVisitor(BaseVisitor):
         return expCode + code, expType
     
     def visitCallExpr(self, ast: CallExpr, o):
-        pass
+        sym = next(filter(lambda x: ast.method.name == x.name, o.sym), None)
+        
+        in_ = ("", list())
+        for x in ast.param:
+            str1, typ1 = self.visit(x, Access(o.frame, o.sym, False, True))
+            in_ = (in_[0] + str1, in_[1].append(typ1))
+            
+        self.emit.printout(in_[0])
+        self.emit.printout(self.emit.emitINVOKESTATIC(sym.value.value + "/" + ast.method.name, sym.mtype, o.frame))
     
     def visitNewExpr(self, ast: NewExpr, o):
-        pass
+        code = self.emit.emitNEWEXP(ast.classname.name)
+        dupCode = self.emit.emitDUP(o.frame)
+        constructorCode = self.emit.emitINVOKESPECIAL(o.frame)
+        
+        return code + dupCode + constructorCode, ClassType(ast.classname)
     
     def visitArrayCell(self, ast: ArrayCell, o):
         pass
@@ -390,7 +402,7 @@ class CodeGenVisitor(BaseVisitor):
         return self.emit.emitPUSHCONST(ast.value, StringType(), o.frame), StringType()
     
     def visitNullLiteral(self, ast, o):
-        return None
+        return self.emit.emitPUSHNULL(), ClassType(None)
     
     def visitSelfLiteral(self, ast, o):
         return None 
