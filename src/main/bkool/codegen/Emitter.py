@@ -217,13 +217,20 @@ class Emitter():
     *   @param in the type of the attribute.
     *   @param isFinal true in case of constant; false otherwise
     '''
-    def emitATTRIBUTE(self, lexeme, in_, isFinal, value):
+    def emitSTATICFIELD(self, lexeme, in_, isFinal):
         #lexeme: String
         #in_: Type
         #isFinal: Boolean
         #value: String
 
-        return self.jvm.emitSTATICFIELD(lexeme, self.getJVMType(in_), false)
+        return self.jvm.emitSTATICFIELD(lexeme, self.getJVMType(in_), isFinal)
+    
+    def emitINSTANCEFIELD(self, lexeme, in_):
+        #lexeme: String
+        #in_: Type
+        #value: String
+        
+        return self.jvm.emitINSTANCEFIELD(lexeme, self.getJVMType(in_))
 
     def emitGETSTATIC(self, lexeme, in_, frame):
         #lexeme: String

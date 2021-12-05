@@ -270,14 +270,37 @@ class CheckCodeGenSuite(unittest.TestCase):
     #     expect = ""
     #     self.assertTrue(TestCodeGen.test(input,expect,523))
         
-    def test_bkool_forstmt5(self):
+    # def test_bkool_forstmt5(self):
+    #     input = """class BKoolClass {
+    #             static void main() {
+    #                 int b = 5;
+    #                 for i := 1 to 5 do {
+    #                     io.writeInt(i);
+    #                 }
+    #             }
+    #         }"""
+    #     expect = "12345"
+    #     self.assertTrue(TestCodeGen.test(input,expect,524))
+        
+    # def test_bkool_static_field1(self):
+    #     input = """class BKoolClass {
+    #             static int a = 10;
+    #             static void main() {
+    #                 int b = 5;
+    #                 for i := 1 to 5 do {
+    #                     io.writeInt(i);
+    #                 }
+    #             }
+    #         }"""
+    #     expect = "12345"
+    #     self.assertTrue(TestCodeGen.test(input,expect,525))
+        
+    def test_bkool_static_field2(self):
         input = """class BKoolClass {
+                static final int a = 10;
                 static void main() {
                     int b = 5;
-                    for i := 1 to 5 do {
-                        io.writeInt(i);
-                    }
                 }
             }"""
-        expect = "12345"
-        self.assertTrue(TestCodeGen.test(input,expect,524))
+        expect = ""
+        self.assertTrue(TestCodeGen.test(input,expect,526))

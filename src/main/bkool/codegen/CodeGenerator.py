@@ -92,7 +92,7 @@ class CodeGenVisitor(BaseVisitor):
         self.parentName = ast.parentname if ast.parentname else "java.lang.Object"
         self.emit.printout(self.emit.emitPROLOG(self.className, self.parentName))
         
-        [self.visit(ele, None) for ele in ast.memlist if type(ele) == AttributeDecl]
+        [self.visit(ele, SubBody(None, self.env)) for ele in ast.memlist if type(ele) == AttributeDecl]
         [self.visit(ele, SubBody(None, self.env)) for ele in ast.memlist if type(ele) == MethodDecl]
         
         # generate default constructor
@@ -100,12 +100,17 @@ class CodeGenVisitor(BaseVisitor):
         self.emit.emitEPILOG()
         return c
     
-    def visitAttributeDecl(self, ast: AttributeDecl, o):
-        self.visit(ast.decl, o)
+    def visitAttributeDecl(self, ast: AttributeDecl, o: SubBody):
+        o.frame = ast.kind
+        return self.visit(ast.decl, o)
     
     def visitVarDecl(self, ast: VarDecl, o):
-        if o.frame is None:
-            code = self.emit.emitATTRIBUTE(ast.variable.name, ast.varType, False)
+        if type(o.frame) is Static:
+            code = self.emit.emitSTATICFIELD(ast.variable.name, ast.varType, False)
+            self.emit.printout(code)
+            return Symbol(ast.variable.name, ast.varType, CName(self.className))
+        elif type(o.frame) is Instance:
+            code = self.emit.emitINSTANCEFIELD(ast.variable.name, ast.varType)
             self.emit.printout(code)
             return Symbol(ast.variable.name, ast.varType, CName(self.className))
         else:
@@ -120,8 +125,8 @@ class CodeGenVisitor(BaseVisitor):
             return Symbol(ast.variable.name, ast.varType, Index(idx))
     
     def visitConstDecl(self, ast: ConstDecl, o):
-        if o.frame is None:
-            code = self.emit.emitATTRIBUTE(ast.constant.name, ast.constType, True)
+        if type(o.frame) is Static:
+            code = self.emit.emitSTATICFIELD(ast.constant.name, ast.constType, True)
             self.emit.printout(code)
             return Symbol(ast.constant.name, ast.constType, CName(self.className))
         else:

@@ -1,0 +1,6 @@
+class BKoolClass {
+                static final int a = 10;
+                static void main() {
+                    int b = 5;
+                }
+            }
